@@ -58,12 +58,27 @@
             background-color: #ccc;
         }
 
+        .cell.flagged {
+            background-color: #ffcc00;
+        }
+
         #restart-button {
             margin-top: 20px;
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
             background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        #flag-mode-button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #2196F3;
             color: white;
             border: none;
             border-radius: 5px;
@@ -89,7 +104,7 @@
                 font-size: 16px;
             }
 
-            #restart-button {
+            #restart-button, #flag-mode-button {
                 font-size: 14px;
                 padding: 8px 16px;
             }
@@ -102,6 +117,7 @@
         Победы: <span id="wins">0</span> | Поражения: <span id="losses">0</span>
     </div>
     <div id="board"></div>
+    <button id="flag-mode-button">Режим флажка</button>
     <button id="restart-button" onclick="restartGame()">Начать заново</button>
 
     <script>
@@ -113,6 +129,7 @@
         let revealedCells = 0;
         let wins = 0;
         let losses = 0;
+        let flagMode = false; // Режим флажка
 
         // Загрузка данных из localStorage
         function loadStats() {
@@ -161,6 +178,18 @@
 
         function handleCellClick(event) {
             const cell = event.target;
+            if (flagMode) {
+                // Режим флажка: ставим или убираем флажок
+                if (!cell.classList.contains('revealed')) {
+                    cell.classList.toggle('flagged');
+                }
+                return;
+            }
+
+            if (cell.classList.contains('flagged')) {
+                return; // Не открывать клетку, если она помечена флажком
+            }
+
             const row = parseInt(cell.dataset.row);
             const col = parseInt(cell.dataset.col);
 
@@ -171,7 +200,7 @@
                 saveStats(); // Сохраняем данные
                 alert('Игра окончена! Вы наступили на мину!');
                 revealAllMines();
-                setTimeout(restartGame, 0);
+                setTimeout(restartGame, 0); // Перезапуск через 1 секунду
                 return;
             }
 
@@ -246,6 +275,12 @@
             createBoard();
             placeMines();
         }
+
+        // Переключение режима флажка
+        document.getElementById('flag-mode-button').addEventListener('click', () => {
+            flagMode = !flagMode;
+            document.getElementById('flag-mode-button').textContent = flagMode ? 'Режим открытия' : 'Режим флажка';
+        });
 
         // Инициализация игры
         loadStats(); // Загружаем данные при запуске
