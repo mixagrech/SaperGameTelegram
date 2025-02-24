@@ -2,44 +2,72 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Сапёр</title>
     <style>
+        /* Общие стили */
         body {
             font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-            padding: 10px;
+            justify-content: flex-start; /* Изменено для корректного отображения */
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         h1 {
-            margin-bottom: 20px;
-            font-size: 24px;
+            margin: 10px 0;
+            font-size: 20px;
             text-align: center;
+            color: white;
         }
 
         #stats {
             margin-bottom: 10px;
-            font-size: 18px;
+            font-size: 16px;
             text-align: center;
+            color: white;
+        }
+
+        #board-container {
+            width: 90vw; /* Занимает 90% ширины экрана */
+            height: 80vh; /* Занимает 80% высоты экрана */
+            overflow: auto; /* Добавлена прокрутка */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px;
         }
 
         #board {
             display: grid;
-            grid-template-columns: repeat(10, 25px);
-            grid-template-rows: repeat(10, 25px);
             gap: 2px;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 5px;
+            border-radius: 10px;
+            transform-origin: top left;
+            transition: transform 0.2s ease;
         }
 
         .cell {
             width: 25px;
             height: 25px;
-            background-color: #ccc;
+            background-color: #444;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -47,67 +75,144 @@
             font-size: 12px;
             font-weight: bold;
             user-select: none;
+            border-radius: 3px;
+            color: white;
         }
 
         .cell.revealed {
-            background-color: #aaa;
+            background-color: #666;
             cursor: default;
         }
 
         .cell.mine {
-            background-color: #ccc;
+            background-color: #444; /* Цвет такой же, как у обычных клеток */
+            /* Иконка бомбы (можно использовать emoji или изображение) */
+            content: '💣';
+            font-size: 16px;
         }
 
         .cell.flagged {
             background-color: #ffcc00;
         }
 
-        #restart-button {
-            margin-top: 20px;
+        #restart-button, #flag-mode-button, #mode-button {
+            position: fixed;
+            bottom: 10px;
             padding: 10px 20px;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
             border: none;
             border-radius: 5px;
+            color: white;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
         }
 
         #flag-mode-button {
+            left: 10px;
+            background: linear-gradient(45deg, #2196F3, #1e88e5);
+        }
+
+        #mode-button {
+            right: 10px;
+            background: linear-gradient(45deg, #ff5722, #e64a19);
+        }
+
+        #zoom-buttons {
+            position: fixed;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #zoom-buttons button {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            font-size: 20px;
+            cursor: pointer;
+            background: linear-gradient(45deg, #2196F3, #1e88e5);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #game-over, #game-win {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        #game-over button, #game-win button {
             margin-top: 10px;
             padding: 10px 20px;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
-            background-color: #2196F3;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
             color: white;
             border: none;
             border-radius: 5px;
         }
 
-        @media (max-width: 400px) {
-            #board {
-                grid-template-columns: repeat(10, 20px);
-                grid-template-rows: repeat(10, 20px);
-            }
+        #mode-panel {
+            display: none;
+            position: fixed;
+            bottom: 60px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            z-index: 1000;
+            width: 200px;
+        }
 
-            .cell {
-                width: 20px;
-                height: 20px;
-                font-size: 10px;
-            }
+        #mode-panel button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 14px;
+            cursor: pointer;
+            background: linear-gradient(45deg, #2196F3, #1e88e5);
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
 
-            h1 {
-                font-size: 20px;
-            }
+        #custom-mines {
+            width: calc(100% - 20px);
+            padding: 10px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
 
-            #stats {
-                font-size: 16px;
-            }
-
-            #restart-button, #flag-mode-button {
-                font-size: 14px;
-                padding: 8px 16px;
-            }
+        #error-message {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
         }
     </style>
 </head>
@@ -116,13 +221,48 @@
     <div id="stats">
         Победы: <span id="wins">0</span> | Поражения: <span id="losses">0</span>
     </div>
-    <div id="board"></div>
-    <button id="flag-mode-button">Режим флажка</button>
-    <button id="restart-button" onclick="restartGame()">Начать заново</button>
+    <div id="board-container">
+        <div id="board"></div>
+    </div>
+
+    <!-- Фиксированные кнопки -->
+    <button id="flag-mode-button">🚩</button>
+    <button id="mode-button" onclick="toggleModePanel()">⚙️</button>
+    <button id="restart-button" onclick="restartGame()">🔄</button>
+
+    <!-- Кнопки масштабирования -->
+    <div id="zoom-buttons">
+        <button onclick="zoomIn()">+</button>
+        <button onclick="zoomOut()">-</button>
+    </div>
+
+    <!-- Панель выбора режима -->
+    <div id="mode-panel">
+        <button onclick="setDifficulty('easy')">Лёгкий</button>
+        <button onclick="setDifficulty('medium')">Средний</button>
+        <button onclick="setDifficulty('hard')">Сложный</button>
+        <input id="custom-mines" type="number" min="5" placeholder="Количество мин">
+        <button onclick="setCustomDifficulty()">Пользовательский</button>
+    </div>
+
+    <!-- Окно проигрыша -->
+    <div id="game-over">
+        <h2>Игра окончена!</h2>
+        <button onclick="restartGame()">Начать заново</button>
+    </div>
+
+    <!-- Окно победы -->
+    <div id="game-win">
+        <h2>Вы победили!</h2>
+        <button onclick="restartGame()">Начать заново</button>
+    </div>
+
+    <!-- Уведомление об ошибке -->
+    <div id="error-message"></div>
 
     <script>
-        const BOARD_SIZE = 10;
-        const NUM_MINES = 10;
+        let BOARD_SIZE = 10;
+        let NUM_MINES = 10;
 
         let board = [];
         let mines = [];
@@ -130,6 +270,11 @@
         let wins = 0;
         let losses = 0;
         let flagMode = false; // Режим флажка
+        let firstClick = true; // Первый клик
+        let scale = 1; // Масштаб карты
+        let offsetX = 0; // Смещение по X
+        let offsetY = 0; // Смещение по Y
+        let startX, startY; // Начальные координаты для перемещения
 
         // Загрузка данных из localStorage
         function loadStats() {
@@ -148,6 +293,8 @@
         function createBoard() {
             const boardElement = document.getElementById('board');
             boardElement.innerHTML = '';
+            boardElement.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 25px)`;
+            boardElement.style.gridTemplateRows = `repeat(${BOARD_SIZE}, 25px)`;
             for (let row = 0; row < BOARD_SIZE; row++) {
                 board[row] = [];
                 for (let col = 0; col < BOARD_SIZE; col++) {
@@ -160,15 +307,21 @@
                     board[row][col] = cell;
                 }
             }
+            updateTransform();
         }
 
-        function placeMines() {
+        function placeMines(excludeRow, excludeCol) {
             mines = [];
             let minesPlaced = 0;
             while (minesPlaced < NUM_MINES) {
                 const row = Math.floor(Math.random() * BOARD_SIZE);
                 const col = Math.floor(Math.random() * BOARD_SIZE);
-                if (!board[row][col].classList.contains('mine')) {
+                // Не ставим мину в клетку, на которую нажали, и вокруг неё
+                if (
+                    !board[row][col].classList.contains('mine') &&
+                    Math.abs(row - excludeRow) > 1 &&
+                    Math.abs(col - excludeCol) > 1
+                ) {
                     board[row][col].classList.add('mine');
                     mines.push({ row, col });
                     minesPlaced++;
@@ -193,14 +346,18 @@
             const row = parseInt(cell.dataset.row);
             const col = parseInt(cell.dataset.col);
 
+            if (firstClick) {
+                // Генерация мин после первого клика
+                placeMines(row, col);
+                firstClick = false;
+            }
+
             if (cell.classList.contains('mine')) {
                 cell.classList.add('revealed');
                 losses++;
                 document.getElementById('losses').textContent = losses;
                 saveStats(); // Сохраняем данные
-                alert('Игра окончена! Вы наступили на мину!');
-                revealAllMines();
-                setTimeout(restartGame, 0); // Перезапуск через 1 секунду
+                showGameOver();
                 return;
             }
 
@@ -218,9 +375,7 @@
                     wins++;
                     document.getElementById('wins').textContent = wins;
                     saveStats(); // Сохраняем данные
-                    alert('Вы победили!');
-                    revealAllMines();
-                    setTimeout(restartGame, 1000); // Перезапуск через 1 секунду
+                    showGameWin();
                 }
             }
         }
@@ -263,29 +418,149 @@
             }
         }
 
-        function revealAllMines() {
-            mines.forEach(mine => {
-                const cell = board[mine.row][mine.col];
-                cell.classList.add('revealed');
-            });
+        function showGameOver() {
+            document.getElementById('game-over').style.display = 'block';
+        }
+
+        function showGameWin() {
+            document.getElementById('game-win').style.display = 'block';
         }
 
         function restartGame() {
             revealedCells = 0;
+            firstClick = true;
+            document.getElementById('game-over').style.display = 'none';
+            document.getElementById('game-win').style.display = 'none';
             createBoard();
-            placeMines();
         }
+
+        function setDifficulty(difficulty) {
+            if (difficulty === 'easy') {
+                BOARD_SIZE = 10;
+                NUM_MINES = 10;
+            } else if (difficulty === 'medium') {
+                BOARD_SIZE = 15; // Квадратное поле 15x15
+                NUM_MINES = 25;
+            } else if (difficulty === 'hard') {
+                BOARD_SIZE = 20; // Квадратное поле 20x20
+                NUM_MINES = 100;
+            }
+            restartGame();
+        }
+
+        function setCustomDifficulty() {
+            const customMines = parseInt(document.getElementById('custom-mines').value);
+            if (customMines >= 5 && customMines <= BOARD_SIZE * BOARD_SIZE - 1) {
+                NUM_MINES = customMines;
+                restartGame();
+            } else {
+                showError('Введите число мин от 5 до ' + (BOARD_SIZE * BOARD_SIZE - 1));
+            }
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 3000);
+        }
+
+        function toggleModePanel() {
+            const modePanel = document.getElementById('mode-panel');
+            modePanel.style.display = modePanel.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // Закрытие панели настроек при клике мимо
+        document.addEventListener('click', (event) => {
+            const modePanel = document.getElementById('mode-panel');
+            const modeButton = document.getElementById('mode-button');
+            if (modePanel.style.display === 'block' && !modePanel.contains(event.target) && !modeButton.contains(event.target)) {
+                modePanel.style.display = 'none';
+            }
+        });
 
         // Переключение режима флажка
         document.getElementById('flag-mode-button').addEventListener('click', () => {
             flagMode = !flagMode;
-            document.getElementById('flag-mode-button').textContent = flagMode ? 'Режим открытия' : 'Режим флажка';
+            document.getElementById('flag-mode-button').textContent = flagMode ? '❌' : '🚩';
+        });
+
+        // Масштабирование
+        function zoomIn() {
+            if (scale < 2) {
+                scale += 0.1;
+                updateTransform();
+            }
+        }
+
+        function zoomOut() {
+            if (scale > 0.5) {
+                scale -= 0.1;
+                updateTransform();
+            }
+        }
+
+        // Обновление трансформации (масштаб и смещение)
+        function updateTransform() {
+            const boardContainer = document.getElementById('board-container');
+            const board = document.getElementById('board');
+            const boardWidth = board.offsetWidth * scale;
+            const boardHeight = board.offsetHeight * scale;
+
+            // Ограничение смещения, чтобы поле не уходило за пределы экрана
+            offsetX = Math.min(Math.max(offsetX, -boardWidth / 2), boardWidth / 2);
+            offsetY = Math.min(Math.max(offsetY, -boardHeight / 2), boardHeight / 2);
+
+            boardContainer.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+        }
+
+        // Обработка жестов масштабирования и перемещения
+        let initialDistance = null;
+
+        document.getElementById('board-container').addEventListener('touchstart', (event) => {
+            if (event.touches.length === 1) {
+                // Начало перемещения
+                startX = event.touches[0].clientX - offsetX;
+                startY = event.touches[0].clientY - offsetY;
+            } else if (event.touches.length === 2) {
+                // Начало масштабирования
+                initialDistance = Math.hypot(
+                    event.touches[0].clientX - event.touches[1].clientX,
+                    event.touches[0].clientY - event.touches[1].clientY
+                );
+            }
+        });
+
+        document.getElementById('board-container').addEventListener('touchmove', (event) => {
+            if (event.touches.length === 1) {
+                // Перемещение
+                offsetX = event.touches[0].clientX - startX;
+                offsetY = event.touches[0].clientY - startY;
+                updateTransform();
+            } else if (event.touches.length === 2) {
+                // Масштабирование
+                const currentDistance = Math.hypot(
+                    event.touches[0].clientX - event.touches[1].clientX,
+                    event.touches[0].clientY - event.touches[1].clientY
+                );
+
+                if (initialDistance !== null) {
+                    const scaleFactor = currentDistance / initialDistance;
+                    scale = Math.min(Math.max(scale * scaleFactor, 0.5), 2);
+                    updateTransform();
+                }
+            }
+        });
+
+        document.getElementById('board-container').addEventListener('touchend', () => {
+            initialDistance = null;
         });
 
         // Инициализация игры
         loadStats(); // Загружаем данные при запуске
         createBoard();
-        placeMines();
     </script>
 </body>
 </html>
